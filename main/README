@@ -1,0 +1,8 @@
+To Run: java -cp gson-2.8.0.jar: StarWarsAPI2   (from within working directory)
+
+All inputs but initial require you to type out full name of person, species, planet etc.
+
+Some information might be in the form of URLs. The information is loaded only when
+the option is selected from initial selection screen.
+
+Recommend selecting 'Load All' option before proceeding.

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Testing D3 on Star Wars data</title>
+    <script type="text/javascript" src="jsons.js"></script>
+    <script type="text/javascript" src="d3.v4.js"></script>
+</head>
+<body bgcolor="black">
+<h1 align="center"><font color="gold">Sort on basis of species</font></h1>
+</body>
+    <script type="text/javascript">
+        var json = peopleObject;
+        var nodesArr = new Array();
+        for (key in json) {
+            nodesArr.push(json[key]);
+        }
+
+        var width = 1600;
+        var height = 1800;
+        var svg = d3.select('body').append('svg')
+                    .attr('width', width)
+                    .attr('height', height);
+
+        var initX = 30;
+        var initY = 60;
+        // will hold the positions of the gravitynodes
+        var positions = {};
+        var gravityNodesArray = d3.values(speciesObject);
+        var gravityNodes = svg.append('g').attr('class', 'gravityNodes')
+                            .selectAll('.circles')
+                            .data(gravityNodesArray)
+                            .enter()
+                            .append('circle')
+                            .attr('r', '12')
+                            .attr('cx', function(d) {
+                                initX += 240;
+                                var temp = {};
+                                if (initX >= width - 200) {
+                                    initX = 270;
+                                    initY += 180;
+                                }
+                                temp.x = initX;
+                                temp.y = initY;
+                                positions[d.name] = temp;
+                                return initX;
+                            })
+                            .attr('cy', function(d) {
+                                return positions[d.name].y;
+                            })
+                            .attr('fill', 'blue')
+                            .on('mouseover', mouseoverNode)
+                            .on('mouseout', function(d) {
+                                // Remove the info text on mouse out.
+                                // Removes with ID created for the temporary text node
+                                d3.select('#temporaryTextNode').remove();
+                            });
+        // var gravityForce = d3.forceSimulation()
+        //                         .nodes(gravityNodesArray)
+        //                         .force('charge', -15)
+        //                         .on('tick', tick);
+
+        var unknown = svg.append('circle').attr('cx', width / 2).attr('cy', height / 2)
+                            .attr('r', 12).attr('fill', 'blue').append('textspan')
+                            .attr('style', 'font-size: 10')
+                            .style('fill', 'orange').text('unknown');
+
+        var gravityNodeLabels = svg.append('g').attr('class', 'gravitynodeLabel')
+                                    .selectAll('.text').data(gravityNodesArray)
+                                    .enter().append('text')
+                                    .attr("dx", function(d) {
+                                        return positions[d.name].x;
+                                    })
+                                    .attr("dy", function(d) {
+                                        return positions[d.name].y + 10;
+                                    })
+                                    .attr('style', 'font-size: 10')
+                                    .style('fill', 'orange')
+                                    .text(function(d) {
+                                        if (d.name === undefined) {
+                                            return d.title;
+                                        } else {
+                                            return d.name;
+                                        }
+                                    });
+
+        var force = d3.forceSimulation() //build the layout
+            .nodes(nodesArr)
+            // .force('x', d3.forceX(width / 2).strength(0.2)) // gravity replacement
+            .force('x', d3.forceX(function(d) {
+                // return width / 2;
+                var species = d['species'];
+                if (urls[species] !== undefined) {
+                    species = urls[species].name;
+                    return positions[species].x;
+                } else {
+                    return width / 2;
+                }
+            }).strength(0.2))
+            .force('y', d3.forceY(function(d) {
+                // return height / 2;
+                // var species = d['species'];
+                // return positions[species].y;
+                var species = d['species'];
+                if (urls[species] !== undefined) {
+                    species = urls[species].name;
+                    return positions[species].y + 30;
+                } else {
+                    return height / 2;
+                }
+            }).strength(0.2)) // gravity replacement
+            .force("charge", d3.forceManyBody().strength(-75)) //set to create repulsion and avoid overlap of nodes
+            .on("tick", tick); //what to do when action performed on node
+
+        var nodes = svg.append('g').attr('class', 'nodes')
+                        .selectAll('circle')
+                        .data(nodesArr).enter()
+                        .append('circle')
+                        .attr('r', '14')
+                        .attr('cy', '25')
+                        .attr('cx', function(d) {
+                            initX += 25;
+                            return initX;
+                        })
+                        .attr('fill', 'red');
+
+        var nodeLabels = svg.append('g').attr('class', 'labels')
+                            .selectAll('text')
+                            .data(nodesArr).enter()
+                            .append('text')
+                            .attr("dx", 12)
+                            .attr("dy", 3)
+                            .attr('style', 'font-size: 10')
+                            .style('fill', 'orange')
+                            .text(function(d) {
+                                if (d.name === undefined) {
+                                    return d.title;
+                                } else {
+                                    return d.name;
+                                }
+                            });
+
+
+        nodes.on('mouseover', mouseoverNode)
+                .on('mouseout', function(d) {
+                    // Remove the info text on mouse out.
+                    // Removes with ID created for the temporary text node
+                    d3.select('#temporaryTextNode').remove();
+                });
+
+        nodes.on('dblclick', doubleOnNode);
+
+        var draghandler = d3.drag()
+                    .on('start', function(d) {
+                        if (!d3.event.active) force.alphaTarget(0.3)
+                            .restart();
+                           d.fx = d.x;
+                           d.fy = d.y;
+                    })
+                    .on('drag', function(d) {
+                        d.fx = d3.event.x;
+                        d.fy = d3.event.y;
+                    })
+                    .on('end', function(d) {
+                        if (!d3.event.active) force.alphaTarget(0);
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    });
+        draghandler(nodes);
+        var toDelete = false;
+        function doubleOnNode(d) {
+            // will show opening crawl as tooltip if available
+            // on double clicking, replaces default tooltip with the opening crawl
+            if (d['opening_crawl'] === undefined) {
+                return;
+            }
+            if (!toDelete) {
+                // var jsonInfo = json[d];
+                var curr = d3.select(this);
+                var tempText = curr.append('title')
+                        .attr('id', 'additionalInfo')
+                        .attr('dx', 12)
+                        .attr('dy', '0.35em')
+                        .attr('style', 'font-size: 10')
+                        .text(function(d) {
+                            return "Opening Crawl: \n" + d['opening_crawl'];
+                        });
+                toDelete = true;
+            } else {
+                d3.selectAll('#additionalInfo').remove();
+                toDelete = false;
+            }
+        }
+
+        function tick() {
+            nodeLabels.attr("x", function(d) { return d.x; })
+                .attr("y", function(d) { return d.y; });
+
+            nodes.attr('cx', function(d) { return d.x; })
+                .attr('cy', function(d) { return d.y; });
+
+            // gravityNodes.attr('cx', function(d) { return d.x; })
+            //     .attr('cy', function(d) { return d.y; });
+
+            // gravityNodeLabels.attr("x", function(d) { return d.x; })
+            //     .attr("y", function(d) { return d.y; });
+
+            // node.attr("cx", function(d) { return d.x = Math.max(15, Math.min(width - 15, d.x)); })
+            //     .attr("cy", function(d) { return d.y = Math.max(15, Math.min(height - 15, d.y)); });
+
+            // node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+        }
+
+        function mouseoverNode(d) {
+            var jsonInfo = d;
+            var curr = d3.select(this);
+            var tempText = curr.append('title')
+                            .attr('id', 'temporaryTextNode')
+                            .attr('dx', 12)
+                            .attr('dy', '0.35em')
+                            .attr('style', 'font-size: 10')
+                            .text(function(d) {
+                                // var output = "Hi";
+                                var output = "";
+                                for (key in jsonInfo) {
+                                    if (key === "opening_crawl" || key === "created"
+                                     || key === "edited" || key === "vehicles" || key === "starships"
+                                     || key === "x" || key === "y" || key === "vx" || key === "vy"
+                                     || key === "index" || key === "fx" || key === "fy") {
+                                        continue;
+                                    }
+                                    var element = jsonInfo[key];
+                                    if (Array.isArray(element)) {
+                                        output += key + ": ";
+                                        for (arrkey in element) {
+                                            var temp = urls[element[arrkey]];
+                                            if (temp.name === undefined) {
+                                                output += temp.title + ", ";
+                                            } else {
+                                                output += temp.name + ", ";
+                                            }
+                                        }
+                                        output += "\n";
+                                    } else {
+                                        if (key !== "url" && urls[element] !== undefined) {
+                                            output += key + ": " + urls[element]['name'] + "\n";
+                                        } else {
+                                            output += key + ": " + element + "\n";
+                                        }
+                                    }
+                                    output += "\n";
+                                }
+                                return output;
+                            });
+        }
+
+
+    </script>
+</html>
