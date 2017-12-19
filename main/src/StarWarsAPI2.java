@@ -24,7 +24,7 @@ public class StarWarsAPI2 {
         speciesObject, planetObject;
     // these will store urls mapped to JsonObjects
     private JsonObject urls;
-    private String baseURL = "http://swapi.co/api/";
+    private String baseURL = "https://swapi.co/api/";
 
     // signals that the JsonObjects are loaded or to be loaded
     private boolean toLoad;
