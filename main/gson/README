@@ -1,0 +1,2 @@
+Using gson package as it adds support for JsonObjects which is a simple way to
+store the data obtained from the API

@@ -1,0 +1,6 @@
+The html file contains d3 code that renders the visualisation of the information
+received. The d3 code creates multiple blue circles each representing a species.
+The red circles all represent characters. The characters migrate towards the species
+ that they belong to. Hovering the mouse over any of the characters or species gives
+ additional information about the species or the charater.
+The characters can also be dragged to declutter, but the species remain fixed.

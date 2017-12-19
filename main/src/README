@@ -1,3 +1,5 @@
+To compile: javac -cp gson-2.8.0.jar StarWarsAPI2.java (from within working directory)
+
 To Run: java -cp gson-2.8.0.jar: StarWarsAPI2   (from within working directory)
 
 All inputs but initial require you to type out full name of person, species, planet etc.

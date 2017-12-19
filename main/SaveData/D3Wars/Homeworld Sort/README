@@ -1,0 +1,6 @@
+The html file contains d3 code that renders the visualisation of the information
+received. The d3 code creates multiple blue circles each representing a planet.
+The red circles all represent characters. The characters migrate towards the planet
+ that they are from. Hovering the mouse over any of the characters or planets gives
+ additional information about the planet or the charater.
+The characters can also be dragged to declutter, but the planets remain fixed.
