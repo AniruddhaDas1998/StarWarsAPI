@@ -157,7 +157,7 @@ public class StarWarsAPI2 {
                 }
                 break;
             case 8:
-                System.out.println("Thanks. Hope you enjoyed this. Now poda.");
+                System.out.println("Thanks. Hope you enjoyed this.");
                 System.exit(0);
             default:
                 System.out.println("Incorrect option.");
